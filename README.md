@@ -129,8 +129,15 @@ GRANT connect ON DATABASE catalog TO catalog;
 ALTER USER catalog WITH PASSWORD '<Password_Here>';
 ```
 Be sure to replace <Password_Here> with a suitable password.
-We also need to ensure that we can connect via password to our database from other applications. We'll edit `/etc/postgresql/9.5/main/pg_hba.conf` to the following:
+We also need to ensure that we can connect via password to our database from other applications. We'll edit `/etc/postgresql/9.5/main/pg_hba.conf` so that there exists a rule forcing our `catalog` user to use md5-hashed password authentication. Find the first line in this code block and add the second line below it:
 ```conf
+# configuration parameter, or via the -i or -h command line switches.
+local catalog   catalog     md5
+``` 
+Restart PostgreSQL so that it us running with our new changes:
+```bash
+sudo service postgresql restart
+```
 
 #### 5.3 Install Apache2
 ##### 5.3.1 Install
@@ -236,12 +243,20 @@ sudo chown www-data:www-data catalog.wsgi
 sudo chmod 655 catalog.wsgi
 ```
 ##### 6.4.2 Point /catalog to our new wsgi script
-Edit `/etc/apache2/sites_enabled/000-default.conf` and add the following inside the `<VirtualHost>` block:
+Edit `/etc/apache2/sites_enabled/000-default.conf` and modify the test WSGI line inside the `<VirtualHost>` block to look like this:
 ```apache
-WSGIScriptAlias /catalog /var/www/wsgi_scripts/catalog.wsgi
+#WSGIScriptAlias / /var/www/wsgi_scripts/test.wsgi
+WSGIScriptAlias / /var/www/wsgi_scripts/catalog.wsgi
 ```
 Restart Apache2
 ```bash
 sudo apache2ctl restart
 ```
-Navigate to 
+Navigate to server address in your web browser and you should now see the catalog website created during Project 2!
+
+#### 6.5 Update Google and Github OAuth keys to support the new server URL
+##### 6.5.1 Google OAuth
+Login to the [Google API Console](https://console.developers.google.com/) and follow the steps to add the server's URL to the trusted Javascript Origins.
+
+##### 6.5.2 Github OAuth
+It is assumed for the purposes of this guide that you can either update the OAuth application directly OR that you know how to generate an OAuth application for Github and can update application.py appropriately to capture these new credentials.
